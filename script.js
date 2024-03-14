@@ -10,7 +10,7 @@ function playGame(event) {
             'Content-Type': 'application/json'
         }
     };
-    fetch('/', requestOptions)
+    fetch('http://localhost:8000/', requestOptions) // Java HTTPサーバーのURLを指定
         .then(response => response.text())
         .then(result => {
             document.getElementById('result').innerHTML = result;

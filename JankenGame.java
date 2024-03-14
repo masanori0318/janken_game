@@ -26,12 +26,6 @@ public class JankenGame {
                             + "<button type='submit'>Submit</button>"
                             + "</form>";
 
-            byte[] responseBytes = response.getBytes();
-            t.sendResponseHeaders(200, responseBytes.length);
-            OutputStream os = t.getResponseBody();
-            os.write(responseBytes);
-            os.close();
-
             if ("post".equalsIgnoreCase(t.getRequestMethod())) {
                 Scanner scanner = new Scanner(t.getRequestBody());
                 String playerChoice = scanner.nextLine().toLowerCase();
@@ -53,16 +47,16 @@ public class JankenGame {
                 }
 
                 // Send the result back to the client
-                response = "<h2>Computer choice: " + computerChoice + "</h2>"
+                response += "<h2>Computer choice: " + computerChoice + "</h2>"
                          + "<p>" + result + "</p>";
-
-                t.getResponseHeaders().set("Content-Type", "text/html");
-                responseBytes = response.getBytes();
-                t.sendResponseHeaders(200, responseBytes.length);
-                os = t.getResponseBody();
-                os.write(responseBytes);
-                os.close();
             }
+
+            t.getResponseHeaders().set("Content-Type", "text/html");
+            byte[] responseBytes = response.getBytes();
+            t.sendResponseHeaders(200, responseBytes.length);
+            OutputStream os = t.getResponseBody();
+            os.write(responseBytes);
+            os.close();
         }
     }
 }
