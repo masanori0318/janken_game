@@ -1,0 +1,13 @@
+/* style.css */
+
+.container {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+button {
+    font-size: 18px;
+    margin: 0 10px;
+    padding: 10px 20px;
+}
