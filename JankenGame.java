@@ -42,8 +42,9 @@ public class JankenGame {
                             + "</html>";
 
             if ("post".equalsIgnoreCase(t.getRequestMethod())) {
-                Scanner scanner = new Scanner(t.getRequestBody());
-                String playerChoice = scanner.nextLine().toLowerCase();
+                // リクエストボディからプレイヤーの選択を取得
+                Scanner scanner = new Scanner(t.getRequestBody(), "UTF-8").useDelimiter("\\A");
+                String playerChoice = scanner.hasNext() ? scanner.next().trim().toLowerCase() : "";
                 scanner.close();
 
                 Random random = new Random();
@@ -61,14 +62,14 @@ public class JankenGame {
                     result = "Computer wins!";
                 }
 
-                // Send the result back to the client
+                // 結果をクライアントに送信
                 response = response.replace("<p id='result'></p>", "<p id='result'>" + result + "</p>");
             }
 
-            // Enable CORS
+            // CORSを有効にする
             t.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
-            t.getResponseHeaders().set("Content-Type", "text/html");
-            byte[] responseBytes = response.getBytes();
+            t.getResponseHeaders().set("Content-Type", "text/html; charset=UTF-8");
+            byte[] responseBytes = response.getBytes("UTF-8");
             t.sendResponseHeaders(200, responseBytes.length);
             OutputStream os = t.getResponseBody();
             os.write(responseBytes);
