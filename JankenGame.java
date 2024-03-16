@@ -19,12 +19,27 @@ public class JankenGame {
     static class JankenHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange t) throws IOException {
-            String response = "<h1>Welcome to Rock Paper Scissors game!</h1>"
-                            + "<form method='post'>"
+            String response = "<!DOCTYPE html>"
+                            + "<html lang='en'>"
+                            + "<head>"
+                            + "<meta charset='UTF-8'>"
+                            + "<meta name='viewport' content='width=device-width, initial-scale=1.0'>"
+                            + "<title>Rock Paper Scissors Game</title>"
+                            + "<link rel='stylesheet' href='style.css'>"
+                            + "</head>"
+                            + "<body>"
+                            + "<h1>Welcome to Rock Paper Scissors game!</h1>"
+                            + "<div class='container'>"
+                            + "<form id='gameForm' method='post'>"
                             + "<label for='choice'>Enter your choice (rock, paper, or scissors):</label><br>"
                             + "<input type='text' id='choice' name='choice'><br>"
                             + "<button type='submit'>Submit</button>"
-                            + "</form>";
+                            + "</form>"
+                            + "</div>"
+                            + "<p id='result'></p>"
+                            + "<script src='script.js'></script>"
+                            + "</body>"
+                            + "</html>";
 
             if ("post".equalsIgnoreCase(t.getRequestMethod())) {
                 Scanner scanner = new Scanner(t.getRequestBody());
@@ -47,10 +62,11 @@ public class JankenGame {
                 }
 
                 // Send the result back to the client
-                response += "<h2>Computer choice: " + computerChoice + "</h2>"
-                         + "<p>" + result + "</p>";
+                response = response.replace("<p id='result'></p>", "<p id='result'>" + result + "</p>");
             }
 
+            // Enable CORS
+            t.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
             t.getResponseHeaders().set("Content-Type", "text/html");
             byte[] responseBytes = response.getBytes();
             t.sendResponseHeaders(200, responseBytes.length);
