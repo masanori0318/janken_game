@@ -1,23 +1,21 @@
-document.getElementById('gameForm').addEventListener('submit', playGame);
+document.getElementById('gameForm').addEventListener('submit', function(event) {
+  event.preventDefault();
+  var choice = document.getElementById('choice').value;
+  play(choice);
+});
 
-function playGame(event) {
-    event.preventDefault(); // フォームのデフォルトの送信を防止
-
-    // プレイヤーの選択を取得
-    const playerSelection = document.getElementById('choice').value.trim().toLowerCase();
-
-    // フォームデータを作成
-    const formData = new FormData();
-    formData.append('choice', playerSelection);
-
-    // POSTリクエストを送信
-    fetch('http://localhost:8000/', {
-        method: 'POST',
-        body: formData  // フォームデータをリクエストボディにセット
-    })
-    .then(response => response.text())
-    .then(result => {
-        document.getElementById('result').innerHTML = result;  // 結果を表示
-    })
-    .catch(error => console.error('Error:', error));
+function play(playerChoice) {
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', '/', true);
+  xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+  xhr.onreadystatechange = function() {
+      if (xhr.readyState === XMLHttpRequest.DONE) {
+          if (xhr.status === 200) {
+              document.getElementById('result').innerHTML = xhr.responseText;
+          } else {
+              console.error('Request failed:', xhr.statusText);
+          }
+      }
+  };
+  xhr.send('choice=' + encodeURIComponent(playerChoice));
 }
