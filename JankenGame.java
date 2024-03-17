@@ -74,10 +74,10 @@ public class JankenGame {
                 }
 
                 // 結果をクライアントに送信
-                String response = "<p id='result'>" + result + "</p>";
+                String response = result;
                 // CORSを有効にする
                 t.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
-                t.getResponseHeaders().set("Content-Type", "text/html; charset=UTF-8");
+                t.getResponseHeaders().set("Content-Type", "text/plain; charset=UTF-8");
                 byte[] responseBytes = response.getBytes("UTF-8");
                 t.sendResponseHeaders(200, responseBytes.length);
                 OutputStream os = t.getResponseBody();
