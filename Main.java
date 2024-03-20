@@ -1,33 +1,39 @@
-import com.sun.net.httpserver.HttpServer;
-import com.sun.net.httpserver.HttpHandler;
-import com.sun.net.httpserver.HttpExchange;
-import java.io.OutputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.io.OutputStream;
 
 public class Main {
-    public static void main(String[] args) throws Exception {
-        HttpServer server = HttpServer.create(new InetSocketAddress(8000), 0);
-        server.createContext("/", new JankenHandler());
-        server.setExecutor(null);
-        server.start();
+    public static void main(String[] args) {
+        try {
+            ServerSocket serverSocket = new ServerSocket(8000);
+            System.out.println("Server started. Listening on port 8000...");
+            Socket clientSocket = serverSocket.accept();
+            System.out.println("Client connected.");
+
+            BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            OutputStream out = clientSocket.getOutputStream();
+
+            String inputLine;
+            while ((inputLine = in.readLine()) != null) {
+                System.out.println("Received: " + inputLine);
+                String response = processInput(inputLine);
+                out.write(response.getBytes());
+            }
+
+            in.close();
+            out.close();
+            clientSocket.close();
+            serverSocket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
-    static class JankenHandler implements HttpHandler {
-        @Override
-        public void handle(HttpExchange exchange) throws IOException {
-            String response = "<html><body><h1>ジャンケンゲーム</h1><p>結果: " + playJanken() + "</p></body></html>";
-            exchange.sendResponseHeaders(200, response.getBytes().length);
-            OutputStream os = exchange.getResponseBody();
-            os.write(response.getBytes());
-            os.close();
-        }
-
-        private String playJanken() {
-            // ジャンケンのロジックをここに実装
-            // この例では単純に"勝ち"、"負け"、"引き分け"のいずれかをランダムに返す
-            String[] results = {"勝ち", "負け", "引き分け"};
-            int randomIndex = (int) (Math.random() * results.length);
-            return results[randomIndex];
-        }
+    private static String processInput(String input) {
+        // Rock, Paper, Scissors logic here
+        return "Response from server: " + input; // Replace with actual game logic
     }
 }
