@@ -1,39 +1,71 @@
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.io.OutputStream;
+import com.sun.net.httpserver.HttpServer;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpExchange;
 
-public class Main {
-    public static void main(String[] args) {
-        try {
-            ServerSocket serverSocket = new ServerSocket(8000);
-            System.out.println("Server started. Listening on port 8000...");
-            Socket clientSocket = serverSocket.accept();
-            System.out.println("Client connected.");
-
-            BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-            OutputStream out = clientSocket.getOutputStream();
-
-            String inputLine;
-            while ((inputLine = in.readLine()) != null) {
-                System.out.println("Received: " + inputLine);
-                String response = processInput(inputLine);
-                out.write(response.getBytes());
-            }
-
-            in.close();
-            out.close();
-            clientSocket.close();
-            serverSocket.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+public class RockPaperScissorsServer {
+    public static void main(String[] args) throws Exception {
+        HttpServer server = HttpServer.create(new InetSocketAddress(8000), 0);
+        server.createContext("/", new MyHandler());
+        server.setExecutor(null);
+        server.start();
+        System.out.println("Server is running on port 8000");
     }
 
-    private static String processInput(String input) {
-        // Rock, Paper, Scissors logic here
-        return "Response from server: " + input; // Replace with actual game logic
+    static class MyHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            String requestMethod = exchange.getRequestMethod();
+            if (requestMethod.equalsIgnoreCase("GET")) {
+                handleGetRequest(exchange);
+            }
+        }
+
+        private void handleGetRequest(HttpExchange exchange) throws IOException {
+            String htmlResponse = "<!DOCTYPE html>"
+                    + "<html>"
+                    + "<head>"
+                    + "<title>Rock Paper Scissors</title>"
+                    + "</head>"
+                    + "<body>"
+                    + "<h1>Rock Paper Scissors</h1>"
+                    + "<div id='game'>"
+                    + "<div id='choices'>"
+                    + "<button onclick='playGame(\"rock\")'>Rock</button>"
+                    + "<button onclick='playGame(\"paper\")'>Paper</button>"
+                    + "<button onclick='playGame(\"scissors\")'>Scissors</button>"
+                    + "</div>"
+                    + "<div id='result'></div>"
+                    + "</div>"
+                    + "<script>"
+                    + "function playGame(playerSelection) {"
+                    + "  var choices = ['Rock', 'Paper', 'Scissors'];"
+                    + "  var computerSelection = choices[Math.floor(Math.random() * choices.length)];"
+                    + "  var result = playRound(playerSelection, computerSelection);"
+                    + "  document.getElementById('result').textContent = result;"
+                    + "}"
+                    + "function playRound(playerSelection, computerSelection) {"
+                    + "  if (playerSelection === computerSelection) {"
+                    + "    return 'It\\'s a tie!';"
+                    + "  } else if ("
+                    + "    (playerSelection === 'Rock' && computerSelection === 'Scissors') ||"
+                    + "    (playerSelection === 'Paper' && computerSelection === 'Rock') ||"
+                    + "    (playerSelection === 'Scissors' && computerSelection === 'Paper')"
+                    + "  ) {"
+                    + "    return 'You win! ' + playerSelection + ' beats ' + computerSelection + '.';"
+                    + "  } else {"
+                    + "    return 'You lose! ' + computerSelection + ' beats ' + playerSelection + '.';"
+                    + "  }"
+                    + "}"
+                    + "</script>"
+                    + "</body>"
+                    + "</html>";
+
+            exchange.sendResponseHeaders(200, htmlResponse.length());
+            OutputStream os = exchange.getResponseBody();
+            os.write(htmlResponse.getBytes());
+            os.close();
+        }
     }
 }

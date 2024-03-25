@@ -1,21 +1,31 @@
-document.getElementById('gameForm').addEventListener('submit', function(event) {
-  event.preventDefault();
-  var choice = document.getElementById('choice').value;
-  play(choice);
-});
+document.addEventListener("DOMContentLoaded", function() {
+  const choices = ["Rock", "Paper", "Scissors"];
 
-function play(playerChoice) {
-  var xhr = new XMLHttpRequest();
-  xhr.open('POST', '/', true);
-  xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-  xhr.onreadystatechange = function() {
-      if (xhr.readyState === XMLHttpRequest.DONE) {
-          if (xhr.status === 200) {
-              document.getElementById('result').innerHTML = xhr.responseText;
-          } else {
-              console.error('Request failed:', xhr.statusText);
-          }
+  function computerPlay() {
+      return choices[Math.floor(Math.random() * choices.length)];
+  }
+
+  function playRound(playerSelection, computerSelection) {
+      if (playerSelection === computerSelection) {
+          return "It's a tie!";
+      } else if (
+          (playerSelection === "Rock" && computerSelection === "Scissors") ||
+          (playerSelection === "Paper" && computerSelection === "Rock") ||
+          (playerSelection === "Scissors" && computerSelection === "Paper")
+      ) {
+          return "You win! " + playerSelection + " beats " + computerSelection + ".";
+      } else {
+          return "You lose! " + computerSelection + " beats " + playerSelection + ".";
       }
-  };
-  xhr.send('choice=' + encodeURIComponent(playerChoice));
-}
+  }
+
+  const buttons = document.querySelectorAll("#choices button");
+  buttons.forEach(button => {
+      button.addEventListener("click", function() {
+          const playerSelection = this.id;
+          const computerSelection = computerPlay();
+          const result = playRound(playerSelection, computerSelection);
+          document.getElementById("result").textContent = result;
+      });
+  });
+});
