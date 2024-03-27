@@ -1,49 +1,118 @@
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.InetSocketAddress;
-import java.util.Random;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
 
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
-import com.sun.net.httpserver.HttpServer;
+public class SimpleBrowser extends JFrame {
+    private JTextField urlField;
+    private JEditorPane contentPane;
 
-public class SimpleJankenBrowser {
+    public SimpleBrowser() {
+        setTitle("Simple Browser");
+        setSize(800, 600);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
 
-    public static void main(String[] args) throws Exception {
-        // ローカルホストで8000ポートを使用してHTTPサーバーを作成
-        HttpServer server = HttpServer.create(new InetSocketAddress(8000), 0);
-        
-        // /playエンドポイントにリクエストがあった場合のハンドラを設定
-        server.createContext("/play", new JankenHandler());
-        
-        // サーバーを開始
-        server.start();
-        
-        System.out.println("Server started on port 8000");
+        urlField = new JTextField();
+        urlField.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                loadURL(urlField.getText());
+            }
+        });
+
+        contentPane = new JEditorPane();
+        contentPane.setEditable(false);
+        contentPane.setContentType("text/html");
+
+        JScrollPane scrollPane = new JScrollPane(contentPane);
+
+        getContentPane().add(urlField, BorderLayout.NORTH);
+        getContentPane().add(scrollPane, BorderLayout.CENTER);
+
+        setVisible(true);
     }
 
-    static class JankenHandler implements HttpHandler {
-        @Override
-        public void handle(HttpExchange exchange) throws IOException {
-            // ジャンケンの手を選択
-            String[] hands = {"Rock", "Paper", "Scissors"};
-            Random random = new Random();
-            int index = random.nextInt(hands.length);
-            String computerHand = hands[index];
+    private void loadURL(String url) {
+        try {
+            contentPane.setPage(url);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
-            // レスポンスの内容を設定
-            String response = "<html><head><title>Janken Game</title></head><body>"
-                    + "<h1>Welcome to Janken Game!</h1>"
-                    + "<p>Computer chose: " + computerHand + "</p>"
-                    + "<p><a href=\"/play\">Play again</a></p>"
-                    + "</body></html>";
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                new SimpleBrowser();
+            }
+        });
+    }
+}
 
-            // HTTPレスポンスの設定
-            exchange.getResponseHeaders().set("Content-Type", "text/html; charset=UTF-8");
-            exchange.sendResponseHeaders(200, response.getBytes().length);
-            OutputStream os = exchange.getResponseBody();
-            os.write(response.getBytes());
-            os.close();
+class JankenGame {
+    private enum Hand { ROCK, PAPER, SCISSORS }
+    
+    public static void main(String[] args) {
+        System.out.println("Let's play Rock-Paper-Scissors!");
+
+        while (true) {
+            // Get user choice
+            Hand userHand = getUserChoice();
+            if (userHand == null) {
+                System.out.println("Invalid input. Please try again.");
+                continue;
+            }
+
+            // Generate computer choice
+            Hand computerHand = getRandomHand();
+
+            // Display choices
+            System.out.println("Your choice: " + userHand);
+            System.out.println("Computer's choice: " + computerHand);
+
+            // Determine the winner
+            String result = determineWinner(userHand, computerHand);
+            System.out.println(result);
+
+            // Ask to play again
+            System.out.println("Do you want to play again? (yes/no)");
+            String playAgain = System.console().readLine();
+            if (!playAgain.equalsIgnoreCase("yes")) {
+                break;
+            }
+        }
+
+        System.out.println("Thanks for playing!");
+    }
+
+    private static Hand getUserChoice() {
+        System.out.println("Enter your choice (rock, paper, or scissors):");
+        String input = System.console().readLine().toLowerCase();
+
+        switch (input) {
+            case "rock":
+                return Hand.ROCK;
+            case "paper":
+                return Hand.PAPER;
+            case "scissors":
+                return Hand.SCISSORS;
+            default:
+                return null;
+        }
+    }
+
+    private static Hand getRandomHand() {
+        int randomNum = (int) (Math.random() * 3);
+        return Hand.values()[randomNum];
+    }
+
+    private static String determineWinner(Hand userHand, Hand computerHand) {
+        if (userHand == computerHand) {
+            return "It's a tie!";
+        } else if ((userHand == Hand.ROCK && computerHand == Hand.SCISSORS) ||
+                   (userHand == Hand.PAPER && computerHand == Hand.ROCK) ||
+                   (userHand == Hand.SCISSORS && computerHand == Hand.PAPER)) {
+            return "You win!";
+        } else {
+            return "Computer wins!";
         }
     }
 }
