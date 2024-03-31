@@ -1,118 +1,61 @@
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 
-public class SimpleBrowser extends JFrame {
-    private JTextField urlField;
-    private JEditorPane contentPane;
+public class SimpleHTTPServer {
 
-    public SimpleBrowser() {
-        setTitle("Simple Browser");
-        setSize(800, 600);
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
+    public static void main(String[] args) throws IOException {
+        int port = 8000; // ポート番号
 
-        urlField = new JTextField();
-        urlField.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                loadURL(urlField.getText());
-            }
-        });
-
-        contentPane = new JEditorPane();
-        contentPane.setEditable(false);
-        contentPane.setContentType("text/html");
-
-        JScrollPane scrollPane = new JScrollPane(contentPane);
-
-        getContentPane().add(urlField, BorderLayout.NORTH);
-        getContentPane().add(scrollPane, BorderLayout.CENTER);
-
-        setVisible(true);
-    }
-
-    private void loadURL(String url) {
-        try {
-            contentPane.setPage(url);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                new SimpleBrowser();
-            }
-        });
-    }
-}
-
-class JankenGame {
-    private enum Hand { ROCK, PAPER, SCISSORS }
-    
-    public static void main(String[] args) {
-        System.out.println("Let's play Rock-Paper-Scissors!");
+        ServerSocket serverSocket = new ServerSocket(port);
+        System.out.println("Server is listening on port " + port);
 
         while (true) {
-            // Get user choice
-            Hand userHand = getUserChoice();
-            if (userHand == null) {
-                System.out.println("Invalid input. Please try again.");
-                continue;
-            }
+            Socket socket = serverSocket.accept();
+            System.out.println("Client connected.");
 
-            // Generate computer choice
-            Hand computerHand = getRandomHand();
-
-            // Display choices
-            System.out.println("Your choice: " + userHand);
-            System.out.println("Computer's choice: " + computerHand);
-
-            // Determine the winner
-            String result = determineWinner(userHand, computerHand);
-            System.out.println(result);
-
-            // Ask to play again
-            System.out.println("Do you want to play again? (yes/no)");
-            String playAgain = System.console().readLine();
-            if (!playAgain.equalsIgnoreCase("yes")) {
-                break;
-            }
-        }
-
-        System.out.println("Thanks for playing!");
-    }
-
-    private static Hand getUserChoice() {
-        System.out.println("Enter your choice (rock, paper, or scissors):");
-        String input = System.console().readLine().toLowerCase();
-
-        switch (input) {
-            case "rock":
-                return Hand.ROCK;
-            case "paper":
-                return Hand.PAPER;
-            case "scissors":
-                return Hand.SCISSORS;
-            default:
-                return null;
+            // リクエストを処理
+            handleRequest(socket);
         }
     }
 
-    private static Hand getRandomHand() {
-        int randomNum = (int) (Math.random() * 3);
-        return Hand.values()[randomNum];
-    }
+    private static void handleRequest(Socket socket) throws IOException {
+        try (OutputStream outputStream = socket.getOutputStream()) {
+            String htmlResponse = "<html><head><title>Janken Game</title></head><body>"
+                    + "<h1>Welcome to Janken Game</h1>"
+                    + "<p>Make your choice:</p>"
+                    + "<button onclick=\"play('rock')\">Rock</button>"
+                    + "<button onclick=\"play('paper')\">Paper</button>"
+                    + "<button onclick=\"play('scissors')\">Scissors</button>"
+                    + "<p id=\"result\"></p>"
+                    + "<script>"
+                    + "function play(playerChoice) {"
+                    + "    var choices = ['rock', 'paper', 'scissors'];"
+                    + "    var computerChoice = choices[Math.floor(Math.random() * choices.length)];"
+                    + "    var result = '';"
+                    + "    if (playerChoice === computerChoice) {"
+                    + "        result = 'It\'s a tie!';"
+                    + "    } else if ((playerChoice === 'rock' && computerChoice === 'scissors') ||"
+                    + "               (playerChoice === 'paper' && computerChoice === 'rock') ||"
+                    + "               (playerChoice === 'scissors' && computerChoice === 'paper')) {"
+                    + "        result = 'You win!';"
+                    + "    } else {"
+                    + "        result = 'Computer wins!';"
+                    + "    }"
+                    + "    document.getElementById('result').innerHTML = 'You chose ' + playerChoice + ', computer chose ' + computerChoice + '. ' + result;"
+                    + "}"
+                    + "</script>"
+                    + "</body></html>";
 
-    private static String determineWinner(Hand userHand, Hand computerHand) {
-        if (userHand == computerHand) {
-            return "It's a tie!";
-        } else if ((userHand == Hand.ROCK && computerHand == Hand.SCISSORS) ||
-                   (userHand == Hand.PAPER && computerHand == Hand.ROCK) ||
-                   (userHand == Hand.SCISSORS && computerHand == Hand.PAPER)) {
-            return "You win!";
-        } else {
-            return "Computer wins!";
+            String httpResponse = "HTTP/1.1 200 OK\r\n"
+                    + "Content-Type: text/html\r\n"
+                    + "Content-Length: " + htmlResponse.length() + "\r\n"
+                    + "Connection: close\r\n\r\n";
+            String response = httpResponse + htmlResponse;
+
+            outputStream.write(response.getBytes(StandardCharsets.UTF_8));
         }
     }
 }
