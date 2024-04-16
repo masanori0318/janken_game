@@ -2,60 +2,57 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
+import java.util.Random;
 
-public class SimpleHTTPServer {
+public class SimpleHttpServer {
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         int port = 8000; // ポート番号
+        try {
+            ServerSocket serverSocket = new ServerSocket(port);
+            System.out.println("HTTPサーバーがポート " + port + " で起動しました。");
 
-        ServerSocket serverSocket = new ServerSocket(port);
-        System.out.println("Server is listening on port " + port);
+            while (true) {
+                Socket clientSocket = serverSocket.accept();
+                System.out.println("クライアントが接続しました。");
 
-        while (true) {
-            Socket socket = serverSocket.accept();
-            System.out.println("Client connected.");
+                OutputStream outputStream = clientSocket.getOutputStream();
 
-            // リクエストを処理
-            handleRequest(socket);
+                // HTTPレスポンスを送信
+                String response = generateResponse();
+                String httpResponse = "HTTP/1.1 200 OK\r\n\r\n" + response;
+                outputStream.write(httpResponse.getBytes("UTF-8"));
+
+                clientSocket.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
-    private static void handleRequest(Socket socket) throws IOException {
-        try (OutputStream outputStream = socket.getOutputStream()) {
-            String htmlResponse = "<html><head><title>Janken Game</title></head><body>"
-                    + "<h1>Welcome to Janken Game</h1>"
-                    + "<p>Make your choice:</p>"
-                    + "<button onclick=\"play('rock')\">Rock</button>"
-                    + "<button onclick=\"play('paper')\">Paper</button>"
-                    + "<button onclick=\"play('scissors')\">Scissors</button>"
-                    + "<p id=\"result\"></p>"
-                    + "<script>"
-                    + "function play(playerChoice) {"
-                    + "    var choices = ['rock', 'paper', 'scissors'];"
-                    + "    var computerChoice = choices[Math.floor(Math.random() * choices.length)];"
-                    + "    var result = '';"
-                    + "    if (playerChoice === computerChoice) {"
-                    + "        result = 'It\'s a tie!';"
-                    + "    } else if ((playerChoice === 'rock' && computerChoice === 'scissors') ||"
-                    + "               (playerChoice === 'paper' && computerChoice === 'rock') ||"
-                    + "               (playerChoice === 'scissors' && computerChoice === 'paper')) {"
-                    + "        result = 'You win!';"
-                    + "    } else {"
-                    + "        result = 'Computer wins!';"
-                    + "    }"
-                    + "    document.getElementById('result').innerHTML = 'You chose ' + playerChoice + ', computer chose ' + computerChoice + '. ' + result;"
-                    + "}"
-                    + "</script>"
-                    + "</body></html>";
+    private static String generateResponse() {
+        String[] choices = {"グー", "チョキ", "パー"};
+        Random random = new Random();
+        int computerChoiceIndex = random.nextInt(choices.length);
+        String computerChoice = choices[computerChoiceIndex];
 
-            String httpResponse = "HTTP/1.1 200 OK\r\n"
-                    + "Content-Type: text/html\r\n"
-                    + "Content-Length: " + htmlResponse.length() + "\r\n"
-                    + "Connection: close\r\n\r\n";
-            String response = httpResponse + htmlResponse;
+        String result = playGame(computerChoice);
+        return "<h1>ジャンケンゲーム</h1>"
+             + "<p>コンピュータの選択：" + computerChoice + "</p>"
+             + "<p>" + result + "</p>";
+    }
 
-            outputStream.write(response.getBytes(StandardCharsets.UTF_8));
+    private static String playGame(String computerChoice) {
+        String playerChoice = "グー"; // 仮のプレイヤーの選択
+
+        if (playerChoice.equals(computerChoice)) {
+            return "引き分け！";
+        } else if ((playerChoice.equals("グー") && computerChoice.equals("チョキ")) ||
+                   (playerChoice.equals("チョキ") && computerChoice.equals("パー")) ||
+                   (playerChoice.equals("パー") && computerChoice.equals("グー"))) {
+            return "勝ち！";
+        } else {
+            return "負け！";
         }
     }
 }
